@@ -25,20 +25,33 @@ public class Inode {
       }
 
       Inode( short iNumber ) {         // retrieving inode from disk
-         byte buffer[] = new byte[32];
-         SysLib.int2bytes(length, buffer, 0);
-         SysLib.short2bytes(count, buffer, 4);
-         SysLib.short2bytes(flag, buffer, 6);
-         for ( int i = 0; i < directSize; i++ )
-         {
-            SysLib.short2bytes(direct[i], buffer, 8 + i*2);
-         }
-         SysLib.short2bytes(indirect, buffer, 30);
 
-         //write to correct space on disk
+
+         
       }
 
-      int toDisk( short iNumber ) {    // save to disk as the i-th inode
-         // design it by yourself.
+      /*
+      // Assumes that we are not overwriting an inode that has already been
+      // changed -- need to put that check in place higher up with a controlled
+      // access inode vector of all inodes
+      */
+      void toDisk( short iNumber ) {    // save to disk as the i-th inode
+         byte buffer[] = new byte[512];
+         byte iNodeData[] = new byte[iNodeSize];
+         SysLib.int2bytes(length, iNodeData, 0);
+         SysLib.short2bytes(count, iNodeData, 4);
+         SysLib.short2bytes(flag, iNodeData, 6);
+         for ( int i = 0; i < directSize; i++ )
+         {
+            SysLib.short2bytes(direct[i], iNodeData, 8 + i*2);
+         }
+         SysLib.short2bytes(indirect, iNodeData, 30);
+
+         //write to correct space on disk
+         System.arraycopy(iNodeData, 0, buffer, iNumber*iNodeSize, iNodeSize);
+         System.out.println("buffer = " + buffer);
+         SysLib.rawwrite()
+
+
       }
    }
