@@ -25,9 +25,15 @@ public class Inode {
       }
 
       Inode( short iNumber ) {         // retrieving inode from disk
+         int blockNumber = 1 + iNumber / (Disk.blockSize / iNodeSize);
+         int offset = (iNumber % (Disk.blockSize / iNodeSize)) * iNodeSize;
+         byte[] nodeData = new byte[Disk.blockSize];
+         SysLib.rawread(blockNumber, nodeData);
 
-
-         
+         length = SysLib.bytes2int(nodeData, offset);
+         offset += 4;
+         count = SysLib.bytes2short(data, offset);
+         offset +=
       }
 
       /*
@@ -35,23 +41,29 @@ public class Inode {
       // changed -- need to put that check in place higher up with a controlled
       // access inode vector of all inodes
       */
-      void toDisk( short iNumber ) {    // save to disk as the i-th inode
-         byte buffer[] = new byte[512];
-         byte iNodeData[] = new byte[iNodeSize];
-         SysLib.int2bytes(length, iNodeData, 0);
-         SysLib.short2bytes(count, iNodeData, 4);
-         SysLib.short2bytes(flag, iNodeData, 6);
+      int toDisk( short iNumber ) {    // save to disk as the i-th inode
+         int blockNumber = 1 + iNumber / (Disk.blockSize / iNodeSize);
+         int offset = (iNumber % (Disk.blockSize / iNodeSize)) * iNodeSize;
+         byte buffer[] = new byte[Disk.blockSize];
+         byte nodeData[] = new byte[iNodeSize];
+
+         //write the inode data into buffer
+         SysLib.int2bytes(length, nodeData, offset);
+         offset += 4;
+         SysLib.short2bytes(count, nodeData, offset);
+         offset += 2;
+         SysLib.short2bytes(flag, nodeData, offset);
+         offset += 2;
          for ( int i = 0; i < directSize; i++ )
          {
-            SysLib.short2bytes(direct[i], iNodeData, 8 + i*2);
+            SysLib.short2bytes(direct[i], nodeData, offset);
+            offset += 2;
          }
-         SysLib.short2bytes(indirect, iNodeData, 30);
+         SysLib.short2bytes(indirect, nodeData, offset);
+         
+         //write to disk
+         SysLib.rawwrite(blockNumber, buffer);
 
-         //write to correct space on disk
-         System.arraycopy(iNodeData, 0, buffer, iNumber*iNodeSize, iNodeSize);
-         System.out.println("buffer = " + buffer);
-         SysLib.rawwrite()
-
-
+         return 1; //TODO find out what to return
       }
    }
