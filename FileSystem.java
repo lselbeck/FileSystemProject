@@ -1,5 +1,5 @@
 //FileSystem.java
-//Author: Luke Selbeck
+//Author:GKITZ & Luke Selbeck
 //Date: 3/18/2015
 //
 //Description:
@@ -8,6 +8,80 @@
 
 public class FileSystem {
 
+    private SuperBlock superblock; 
+    private Directory directory; 
+    private Filetable filetable; 
+
+
+   public FileSystem(int diskBlocks){
+       //create superblock and format disk with 64 iNodes in default
+       superblock = new SuperBlock(diskBlocks); 
+
+       //create directory and register '/' in directory entry 0
+       directory = new Directory (superblock.inodeBlocks ); 
+
+       //file table is created and store directory in the file table 
+       filetable = new Filetable (directory); 
+
+       //directory reconstruction
+       FileTableEntry dirEnt = ("/", "r");
+       int dirSize = fsize(dirEnt); 
+       if (dirSize > 0)
+       { 
+       byte[] dirData = new byte[dirSize];
+       read(dirEnt,dirData); 
+       directory.bytes2directory(dirData); 
+       } 
+          close( dirEnt ); 
+   }
+
+
+void sync( )
+{
+
+
+
+}
+
+boolean format( int files ) 
+{
+
+}
+
+FileTableEntry open( String filename, String mode ) 
+{
+}
+
+boolean close (FileTableEntry ftEnt ) 
+{ 
+
+}
+
+int fsize ( FileTableEntry ftEnt ) 
+{
+}
+int read (FileTableEntry ftEnt, byte[] buffer)
+{
+}
+int write( FileTableEntry ftEnt, byte[] buffer)
+{
+}
+
+private boolean deallocAllBlocks( FileTableEntry ftEnt ) 
+{
+}
+
+boolean delete( String filename )
+{
+}
+
+private final int SEEK_SET = 0; 
+private final int SEEK_CUR = 1; 
+private final int SEEK_END = 2; 
+
+int seek(FileTableEntry ftEnt, int offset, int whence)
+{
+}
 /*format(int files)
 //formats the disk, (i.e., Disk.java's data contents). The parameter files
 //specifies the maximum number of files to be created, (i.e., the number of
@@ -37,9 +111,7 @@ int fd = SysLib.open( String fileName, String mode )
 {
 
 }
-    
-
-/*
+ /*
 //reads up to buffer.length bytes from the file indicated by fd, starting at
 //the position currently pointed to by the seek pointer. If bytes remaining
 //between the current seek pointer and the end of file are less than
@@ -48,6 +120,8 @@ int fd = SysLib.open( String fileName, String mode )
 //bytes to have been read. The return value is the number of bytes that have
 //been read, or a negative value upon an error.
 */
+
+   
 int read( int fd, byte buffer[] ) 
 {
 
