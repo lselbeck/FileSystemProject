@@ -84,7 +84,7 @@ public class Inode {
    {
       if (indexBlockNumber > 1)
       {
-         indirect = indexBlockumber;
+         indirect = indexBlockNumber;
          return true;
       }
       return false;
@@ -93,15 +93,24 @@ public class Inode {
    public short findTargetBlock(int offset)
    {
       int block = offset/512;
+      if (offset > length)
+      {
+         return -1; //trying to access past the end of the file
+      }
+
       if (block > 10)
       {
-         byte[] pointerBlock = new byte[Disk.blockSize];
-         SysLib.rawread()
-         return SysLib.bytes2short()
+         byte[] pointerBlockData = new byte[Disk.blockSize];
+         SysLib.rawread(block, pointerBlockData);
+         return SysLib.bytes2short(pointerBlockData, (block-11)*2);
       }
       else if (block > -1)
       {
          return direct[block];
+      }
+      else
+      {
+         return -1; //error
       }
    }
 
