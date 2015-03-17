@@ -23,7 +23,7 @@ public class Directory {
 		root.getChars( 0, fsize[0], fnames[0], 0 ); // fnames[0] includes "/"
 	}
 
-	public int bytes2directory( byte data[] )
+	public void bytes2directory( byte data[] )
         {
 		// assumes data[] received directory information from disk
 		// initializes the Directory instance with this data[]
@@ -49,26 +49,23 @@ public class Directory {
 		// note: only meaningfull directory information should be converted
 		// into bytes.
 
-             byte[] byteDirectory = new byte[(fsize.length * 4) + (fsize.length * maxChars * 2)]; 
+             byte[] byteDirectory = new byte[(fsize.length * 4) + (fnames.length * maxChars * 2)]; 
              int offset = 0; 
             
-            for(int i = 0; i < fsize.length; i++, offset += 4)
+            for(int i = 0; i < fsize.length; i++, offset += 4) //get sizes & stores into dir first
                { 
                  SysLib.int2bytes(fsize[i], byteDirectory, offset); 
                } 
 
-            for (int i =0; i < fsize.length; i++)
+            for (int i =0; i < fsize.length; i++) //second, stores the names 
                { 
-                  String fname = new String(fnames[i], 0, fsize[i]); 
-                  toWrite = fname.getBytes(); 
-
-                  for (int j = 0; j < toWrite.length; j++)
+                  for (int j = 0; j < fsize[i]; j++)
                   { 
-                    byteDiretory[offset] = (byte) fnames[i][j]; 
+                    byteDirectory[offset] = (byte) fnames[i][j]; 
                     offset++;
                   } 
                }
-             return byteArray; 
+             return byteDirectory; 
 	}
 
 	public short ialloc( String filename ) {
