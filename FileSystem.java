@@ -97,6 +97,11 @@ public class FileSystem
      return ftEnt;  
   }
 
+/*
+  //closes the file corresponding to fd, commits all file transactions on this
+  //file, and unregisters fd from the user file descriptor table of the calling
+  //thread's TCB. The return value is 0 in success, otherwise -1.
+  */
   public boolean close (FileTableEntry ftEnt ) 
   { 
 
@@ -165,11 +170,27 @@ public class FileSystem
 	  	//assumption: if there are enough free blocks,
 	  	//the buffer can be written to the file
 	  	
+	  	int offsetInBlock = ftEnt.seekPtr % Disk.blockSize;
+	  	
 	  	//if empty file
 	  	if (ftEnt.iNode.length == 0)
 	  	{
 	  		ftEnt.iNode.direct[0] = superblock.getFreeBlock();
+	  		for (int i = 0; i < (bufferLength / Disk.blockSize) + 1; i++)
+	  		{
+	  			
+	  		}
 	  		
+	  	}
+	  	else
+	  	{
+	  		byte[][] toInsert = new byte[totalBlocks][Disk.blockSize];
+	  		
+	  		for (int i = 0; i < (bufferLength / Disk.blockSize) + 1; i++)
+	  		{
+	  			System.arraycopy(buffer, 0,
+	  					toInsert[i], (offsetInBlock + (i * Disk.blockSize)));
+	  		}
 	  	}
   	
   }
@@ -222,6 +243,11 @@ public class FileSystem
     return true;
   }
 
+ /*
+  //destroys the file specified by fileName. If the file is currently open, it is
+  //not destroyed until the last open on it is closed, but new attempts to open
+  //it will fail.
+  */
   boolean delete( String filename )
   {
   }
@@ -241,33 +267,5 @@ public class FileSystem
   */
   int seek(FileTableEntry ftEnt, int offset, int whence)
   {
-  }
-
-
-  int write( int fd, byte buffer[] )
-  {
-
-  }
-
-  /*
-  //closes the file corresponding to fd, commits all file transactions on this
-  //file, and unregisters fd from the user file descriptor table of the calling
-  //thread's TCB. The return value is 0 in success, otherwise -1.
-  */
-
-  int close( int fd )
-  {
-
-  }
-
-
-  /*
-  //destroys the file specified by fileName. If the file is currently open, it is
-  //not destroyed until the last open on it is closed, but new attempts to open
-  //it will fail.
-  */
-  int delete( String fileName )
-  {
-
   }
 }
