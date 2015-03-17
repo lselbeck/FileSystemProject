@@ -57,9 +57,9 @@ public class Directory {
                  SysLib.int2bytes(fsize[i], byteDirectory, offset); 
                } 
 
-            for (int i =0; i < fsize.length; i++) //second, stores the names 
+            for (int i =0; i <fsize.length; i++) //second, stores the names 
                { 
-                  for (int j = 0; j < fsize[i]; j++)
+                  for (int j = 0; j < maxChars * 2; j++)
                   { 
                     byteDirectory[offset] = (byte) fnames[i][j]; 
                     offset++;
