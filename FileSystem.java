@@ -8,44 +8,41 @@
 
 public class FileSystem {
 
-    private SuperBlock superblock; 
-    private Directory directory; 
-    private Filetable filetable; 
+  private SuperBlock superblock; 
+  private Directory directory; 
+  private Filetable filetable; 
 
 
-   public FileSystem(int diskBlocks){
-       //create superblock and format disk with 64 iNodes in default
-       superblock = new SuperBlock(diskBlocks); 
+  public FileSystem(int diskBlocks){
+    //create superblock and format disk with 64 iNodes in default
+    superblock = new SuperBlock(diskBlocks); 
 
-       //create directory and register '/' in directory entry 0
-       directory = new Directory (superblock.inodeBlocks ); 
+    //create directory and register '/' in directory entry 0
+    directory = new Directory (superblock.inodeBlocks ); 
 
-       //file table is created and store directory in the file table 
-       filetable = new Filetable (directory); 
+    //file table is created and store directory in the file table 
+    filetable = new Filetable (directory); 
 
-       //directory reconstruction
-       FileTableEntry dirEnt = ("/", "r");
-       int dirSize = fsize(dirEnt); 
-       if (dirSize > 0)
-       { 
-       byte[] dirData = new byte[dirSize];
-       read(dirEnt,dirData); 
-       directory.bytes2directory(dirData); 
-       } 
-          close( dirEnt ); 
-   }
+    //directory reconstruction
+    FileTableEntry dirEnt = ("/", "r");
+    int dirSize = fsize(dirEnt); 
+    if (dirSize > 0)
+    { 
+      byte[] dirData = new byte[dirSize];
+      read(dirEnt,dirData); 
+      directory.bytes2directory(dirData); 
+    } 
+    close( dirEnt ); 
+  }
 
-
-void sync( )
+void sync() 
 {
-
-
-
+  superblock.sync();
 }
 
 boolean format( int files ) 
 {
-
+  superblock.format(files);
 }
 
 FileTableEntry open( String filename, String mode ) 
@@ -186,5 +183,4 @@ int delete( String fileName )
 //returns the size in bytes of the file indicated by fd.
 int fsize( int fd )
 {
-
 }

@@ -40,7 +40,7 @@ public class Inode {
       }
       indirect = SysLib.bytes2short(nodeData, offset);
 
-      if (indirect < 2) //invalid node data; use default constructor
+      if (length < 1 || indirect < 2) //invalid node data; use default constructor
       {
          initializeDefaults();
       }

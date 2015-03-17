@@ -29,23 +29,76 @@ class Superblock {
       }
    }
 
-   public format()
+   public boolean format(int totalFiles)
    {
-      //TODO
+      if (totalFiles < 1 || totalFiles > totalBlocks - 2)
+      {
+         return false;
+      }
+      
+      //zero out disk
+      byte zeroData[] = new byte[Disk.blockSize];
+      for (int i = 0; i < totalBlocks; i++)
+      {
+         SysLib.rawwrite(i, zeroData);
+      }
+
+      //initialize inode/superblock data
+      totalInodes = totalFiles;
+      freeList = 2 + totalFiles/16; //the first free block after inode blocks
+      Inode init;
+      for (int i = 0; i < totalInodes; i++)
+      {
+         init = new Inode(i);
+         init.flag = 0;
+         init.toDisk(i);
+      }
+      sync();
+
+      return true;
    }
 
-   public sync()
+   public void sync() //write data members to buffer and then write to disk
    {
-      //TODO
+      byte superblock[] = new byte[Disk.blockSize];
+      SysLib.int2bytes(totalBlocks, superblock, 0);
+      SysLib.int2bytes(totalInodes, superblock, 4);
+      SysLib.int2bytes(freeList, superblock, 8);
+      SysLib.rawwrite(0, superblock);
    }
 
-   public getFreeBlock()
+   public int getFreeBlock() //dequeue the top block from the free list
    {
-      //TODO
+      int retVal = freeList; //return freeList
+
+      //reassign head to what the top block was pointing to
+      byte[] topBlock = new byte[Disk.blockSize];
+      SysLib.rawread(retVal, topBlock);
+      freeList = SysLib.bytes2int(topBlock, 0);
+
+      //zero out block to use
+      SysLib.int2bytes(0, topBlock, 0);
+      SysLib.rawwrite(retVal, topBlock);
+
+      return retVal;
    }
 
-   public returnBlock(int blockNumber)
+   //enqueue a given block to the free list
+   public boolean returnBlock(int blockNumber)
    {
-      //TODO
+      if (blockNumber < 2 || blockNumber >= totalBlocks)
+      {
+         return false;
+      }
+
+      //new block points to old head
+      byte[] newBlock = new byte[Disk.blockSize];
+      SysLib.int2bytes(freeList, newBlock, 0);
+      SysLib.rawwrite(blockNumber, newBlock);
+
+      //reassign head to point to new block
+      freeList = blockNumber;
+
+      return true;
    }
 }
