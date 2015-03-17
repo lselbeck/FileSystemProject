@@ -11,7 +11,7 @@
 public class FileTableEntry             // Each table entry should have
 {
 	public int seekPtr;                 //    a file seek pointer
-	public final Inode inode;           //    a reference to its inode
+	public final Inode iNode;           //    a reference to its inode
 	public final short iNumber;         //    this inode number
 	public int count;                   //    # threads sharing this entry
 	public final String mode;           //    "r", "w", "w+", or "a"
@@ -24,13 +24,13 @@ public class FileTableEntry             // Each table entry should have
 
 	public FileTableEntry ( Inode i, short inumber, String m ) {
 		seekPtr = 0;             // the seek pointer is set to the file top
-		inode = i;
+		iNode = i;
 		iNumber = inumber;
 		count = 1;               			// at least on thread is using this entry
 		mode = getMode(m);                  // once access mode is set, it never changes
 		if (mode.compareTo(APPEND) == 0)				// if mode is append,
 		{
-			seekPtr = inode.length;        // seekPtr points to the end of file
+			seekPtr = iNode.length;        // seekPtr points to the end of file
 		} 				
 			
 	}
@@ -59,6 +59,6 @@ public class FileTableEntry             // Each table entry should have
 			return APPEND;
 		}
 
-		return -1;
+		return null;
 	}
 }
