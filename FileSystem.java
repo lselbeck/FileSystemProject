@@ -140,31 +140,37 @@ public class FileSystem
 
   public synchronized int write( FileTableEntry ftEnt, byte[] buffer)
   {
-     int bufferLength = buffer.length;
-  	int writeBlock = ftEnt.iNode.findTargetBlock(ftEnt.seekPtr);
-  	
-  	//error handling
-  	if (writeBlock < 0)
-  	{
-  		if (writeBlock == -1)
-  		{
-  			SysLib.cerr("Pointer beyond end of file");
-  		}
-  		else if (writeBlock == -2)
-  		{
-  			SysLib.cerr("Negative pointer");
-  		}
-  		return -1;
-  	}
-  	else if (writeBlock + bufferLength > ftEnt.iNode.maxFileSize())
-  	{
-  		SysLib.cerr("Cannot write beyond maximum file length");
-  		return -1;
-  	}
-  	
-  	//assumption: if there are enough free blocks,
-  	//the buffer can be written to the file
-  	int offsetInBlock
+   	int bufferLength = buffer.length;
+	  	int writeBlock = ftEnt.iNode.findTargetBlock(ftEnt.seekPtr);
+	  	
+	  	//error handling
+	  	if (writeBlock < 0)
+	  	{
+	  		if (writeBlock == -1)
+	  		{
+	  			SysLib.cerr("Pointer beyond end of file");
+	  		}
+	  		else if (writeBlock == -2)
+	  		{
+	  			SysLib.cerr("Negative pointer");
+	  		}
+	  		return -1;
+	  	}
+	  	else if (writeBlock + bufferLength > ftEnt.iNode.maxFileSize())
+	  	{
+	  		SysLib.cerr("Cannot write beyond maximum file length");
+	  		return -1;
+	  	}
+	  	
+	  	//assumption: if there are enough free blocks,
+	  	//the buffer can be written to the file
+	  	
+	  	//if empty file
+	  	if (ftEnt.iNode.length == 0)
+	  	{
+	  		ftEnt.iNode.direct[0] = superblock.getFreeBlock();
+	  		
+	  	}
   	
   }
 

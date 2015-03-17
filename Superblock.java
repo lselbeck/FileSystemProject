@@ -45,14 +45,21 @@ class Superblock {
 
       //initialize inode/superblock data
       totalInodes = totalFiles;
-      freeList = 2 + totalFiles/16; //the first free block after inode blocks
       Inode init;
-      for (int i = 0; i < totalInodes; i++)
+      for (short i = 0; i < totalInodes; i++)
       {
          init = new Inode(i);
          init.flag = 0;
          init.toDisk(i);
       }
+      
+      //add all the rest of the blocks to the free list
+      freeList = 2 + totalFiles/16; //the first free block after inode blocks
+      for (int i = freeList; i < totalBlocks; i++)
+      {
+      	returnBlock(i);
+      }
+      
       sync();
 
       return true;

@@ -111,7 +111,7 @@ public class Inode {
       if (block > 10)
       {
          byte[] pointerBlockData = new byte[Disk.blockSize];
-         SysLib.rawread(block, pointerBlockData);
+         SysLib.rawread(indirect, pointerBlockData);
          return SysLib.bytes2short(pointerBlockData, (block-11)*2);
       }
       else if (block > -1)
