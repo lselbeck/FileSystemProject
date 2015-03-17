@@ -49,12 +49,12 @@ public class Directory {
 		// note: only meaningfull directory information should be converted
 		// into bytes.
 
-             byte[] byteDirectory = new byte[(fsize.length * 4) + (fsize.length * maxChars * 2)]; 
+             byte[] byteDirectory = new byte[(fsize.length * 4) + (fsize.length * maxchars * 2)]; 
              int offset = 0; 
             
             for(int i = 0; i < fsize.length; i++, offset += 4)
                { 
-                 SysLib.int2bytes(fsize[i], byteDirectory, offset); 
+                 SysLib.int2bytes(fsize[i], byteArray, offset); 
                } 
 
             for (int i =0; i < fsize.length; i++)
