@@ -8,6 +8,8 @@
 public class Inode {
    private final static int iNodeSize = 32;       // fix to 32 bytes
    private final static int directSize = 11;      // # direct pointers
+	private final static int maxFileSize =
+			(11 + (Disk.blockSize / 2)) * Disk.blockSize;
 
    public int length; //4 bytes     // file size in bytes
    public short count;//2 bytes     // # file-table entries pointing to this
@@ -99,16 +101,17 @@ public class Inode {
 
    public short findTargetBlock(int offset)
    {
-      int block = offset/512;
       if (offset > length)
       {
          return -1; //trying to access past the end of the file
       }
 
+		int block = offset/512;
+
       if (block > 10)
       {
          byte[] pointerBlockData = new byte[Disk.blockSize];
-         SysLib.rawread(block, pointerBlockData);
+         SysLib.rawread(indirect, pointerBlockData);
          return SysLib.bytes2short(pointerBlockData, (block-11)*2);
       }
       else if (block > -1)
@@ -117,8 +120,13 @@ public class Inode {
       }
       else
       {
-         return -1; //error
+         return -2; //negative pointer location
       }
+   }
+   
+   public int maxFileSize()
+   {
+   	return maxFileSize;
    }
 
    private void initializeDefaults() 
