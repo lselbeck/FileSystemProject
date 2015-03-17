@@ -106,7 +106,12 @@ public class FileSystem
 
   public int fsize ( FileTableEntry ftEnt ) 
   {
-    
+    Inode iNode = ftEnt.iNode;
+    if(iNode == null || ftEnt == null)
+    {
+      return ERROR;
+    }
+    return iNode.length;
   }
 
    /*
