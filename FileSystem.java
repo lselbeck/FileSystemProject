@@ -170,6 +170,50 @@ public class FileSystem
 
   private boolean deallocAllBlocks( FileTableEntry ftEnt ) 
   {
+    Inode iNode;
+    int blockNumber;
+    byte[] data;
+
+    iNode = ftEnt.iNode;
+    if(iNode == null || ftEnt == null)
+    {
+      return false;
+    }
+
+    if(iNode.count > 1)
+    {
+      return false;
+    }
+
+    //deallocate direct blocks
+    for(int i = 0; i < iNode.length; i += Disk.blockSize)
+    {
+      blockNumber = iNode.findTargetBlock(i);
+      //skip unallocated blocks
+      if(blockNumber == ERROR)
+      {
+        continue;
+      }
+      superblock.returnBlock(blockNumber);
+      iNode.setTargetBlock(block, (short) -1);
+    }
+
+    //deallocate indirect blocks
+    data = iNode.deleteIndexBlock();
+    if(data != null)
+    {
+      for(int i = 0; i < (Disk.blockSize / 2); i+= 2)
+      {
+        blockNumber = SysLib.bytes2int(data, i);
+        if(blockNumber == ERROR)
+        {
+          continue;
+        }
+        superblock.returnBlock(blockNumber);
+      }
+    }
+    iNode.toDisk(ftEntry.iNumber);
+    return true;
   }
 
   boolean delete( String filename )
