@@ -34,11 +34,11 @@ public class Directory {
                  { 
                   fsizes[i] = SysLib.bytes2int(data, offset); //stores file sizes 
                  }
-             for (int i =0; i < fnames.length; i++)
+             for (int i =0; i < fnames.length; i++, offset += maxChars *2)
                  {
                    String fname = new String(data, offset, maxChars *2); 
                    fname.getChars(0, fsizes[i], fnames[i], 0);  
-                   offset += fsizes[i]; 
+                  
                  }
 	}
 
