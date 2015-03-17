@@ -15,6 +15,13 @@ public class Inode {
    public short direct[] = new short[directSize];//22 bytes; direct pointers
    public short indirect; //2 bytes              // a indirect pointer
 
+   //flags
+   public static final short UNUSED = 0;
+   public static final short USED = 1;
+   public static final short READ = 2;
+   public static final short WRITE = 3;
+   public static final short DELETE = 4;
+
    Inode( ) 
    {                                    //a default constructor
       initializeDefaults();
