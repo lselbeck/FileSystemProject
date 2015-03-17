@@ -1,5 +1,5 @@
 //FileTableEntry.java
-//Author: Luke Selbeck/ Dallas Van Ess
+//Author: Luke Selbeck, Dallas Van Ess
 //Date: 3/18/2015
 //
 //Description:
