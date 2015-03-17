@@ -13,6 +13,12 @@ public class FileSystem {
   private Filetable filetable; 
 
 
+ private final int SEEK_SET = 0; 
+ private final int SEEK_CUR = 1; 
+ private final int SEEK_END = 2; 
+ private final int ERROR = -1; 
+ private final int OK = 0; 
+
   public FileSystem(int diskBlocks){
     //create superblock and format disk with 64 iNodes in default
     superblock = new SuperBlock(diskBlocks); 
@@ -35,49 +41,17 @@ public class FileSystem {
     close( dirEnt ); 
   }
 
-void sync() 
+ public void sync() 
 {
-  superblock.sync();
-}
+   FileTableEntry dirEnt = open("/", "w"); 
 
-boolean format( int files ) 
-{
-  superblock.format(files);
-}
+   //convert to byte array 
+   byte[] dirByte = directory.directory2bytes(); 
 
-FileTableEntry open( String filename, String mode ) 
-{
-}
-
-boolean close (FileTableEntry ftEnt ) 
-{ 
-
-}
-
-int fsize ( FileTableEntry ftEnt ) 
-{
-}
-int read (FileTableEntry ftEnt, byte[] buffer)
-{
-}
-int write( FileTableEntry ftEnt, byte[] buffer)
-{
-}
-
-private boolean deallocAllBlocks( FileTableEntry ftEnt ) 
-{
-}
-
-boolean delete( String filename )
-{
-}
-
-private final int SEEK_SET = 0; 
-private final int SEEK_CUR = 1; 
-private final int SEEK_END = 2; 
-
-int seek(FileTableEntry ftEnt, int offset, int whence)
-{
+   //write file table entry 
+   write(dirEnt, dirByte); 
+   close(dirByte);  
+   superblock.sync();//superblock writes the data to disk 
 }
 /*format(int files)
 //formats the disk, (i.e., Disk.java's data contents). The parameter files
@@ -85,9 +59,9 @@ int seek(FileTableEntry ftEnt, int offset, int whence)
 //inodes to be allocated) in your file system. The return value is 0 on
 //success, otherwise -1.
 */
-int SysLib.format( int files )
+public boolean format( int files ) 
 {
-
+  superblock.format(files);
 }
 
 
@@ -104,10 +78,30 @@ int SysLib.format( int files )
 //The seek pointer is initialized to zero in the mode "r", "w", and "w+",
 //whereas initialized at the end of the file in the mode "a".
 */
-int fd = SysLib.open( String fileName, String mode )
+public FileTableEntry open( String filename, String mode ) 
 {
+    FileTableEntry ftEnt = filetable.falloc (filename, mode); 
+    if (mode.equals( "w" ) 
+    {
+
+     
+        if (deallocAllBlocks (ftEnt ) == false ) // need to implement
+           return null; 
+    }
+   return ftEnt;  
+}
+
+public boolean close (FileTableEntry ftEnt ) 
+{ 
 
 }
+
+//returns the size in bytes of the file indicated by fd.
+
+public int fsize ( FileTableEntry ftEnt ) 
+{
+}
+
  /*
 //reads up to buffer.length bytes from the file indicated by fd, starting at
 //the position currently pointed to by the seek pointer. If bytes remaining
@@ -118,12 +112,10 @@ int fd = SysLib.open( String fileName, String mode )
 //been read, or a negative value upon an error.
 */
 
-   
-int read( int fd, byte buffer[] ) 
+
+public int read (FileTableEntry ftEnt, byte[] buffer)
 {
-
 }
-
 
 /*write (int fd, byte buffer[])
 //writes the contents of buffer to the file indicated by fd, starting at the
@@ -133,11 +125,21 @@ int read( int fd, byte buffer[] )
 //return value is the number of bytes that have been written, or a negative
 //value upon an error.
 */
-int write( int fd, byte buffer[] )
+
+public synchronized int write( FileTableEntry ftEnt, byte[] buffer)
 {
+   int bufferLength = buffer.length; 
+
 
 }
 
+private boolean deallocAllBlocks( FileTableEntry ftEnt ) 
+{
+}
+
+boolean delete( String filename )
+{
+}
 
 /*
 //Updates the seek pointer corresponding to fd as follows:
@@ -152,17 +154,22 @@ int write( int fd, byte buffer[] )
 //file size, you must set the seek pointer to the end of the file. In both
 //cases, you should return success.
 */
-int seek( int fd, int offset, int whence )
+int seek(FileTableEntry ftEnt, int offset, int whence)
+{
+}
+
+
+int write( int fd, byte buffer[] )
 {
 
 }
-
 
 /*
 //closes the file corresponding to fd, commits all file transactions on this
 //file, and unregisters fd from the user file descriptor table of the calling
 //thread's TCB. The return value is 0 in success, otherwise -1.
 */
+
 int close( int fd )
 {
 
@@ -179,8 +186,3 @@ int delete( String fileName )
 
 }
 
-
-//returns the size in bytes of the file indicated by fd.
-int fsize( int fd )
-{
-}
