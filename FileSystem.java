@@ -11,7 +11,7 @@ public class FileSystem
 
   private SuperBlock superblock; 
   private Directory directory; 
-  private Filetable filetable; 
+  private FileTable filetable; 
 
 
   private final int SEEK_SET = 0; 
@@ -65,6 +65,7 @@ public class FileSystem
   public boolean format( int files ) 
   {
     superblock.format(files);
+
   }
 
 
@@ -83,23 +84,67 @@ public class FileSystem
   */
   public FileTableEntry open( String filename, String mode ) 
   {
-      FileTableEntry ftEnt = filetable.falloc (filename, mode); 
-      if (mode.equals( "w" ) 
-      {
+      FileTableEntry ftEnt;
+      Inode iNode;
 
-       
-          if (deallocAllBlocks (ftEnt ) == false ) // need to implement
-          {
-             return null; 
-          }
-            
+      if(filename == "" || mode == "")
+      {
+        return null;
       }
-     return ftEnt;  
+
+      ftEnt = FileTable.falloc(filename, mode);
+      iNode = ftEnt.iNode;
+      //if ftEnt = null OR iNode = null OR ftEnt mode is invalid OR iNode is flagged 'to be deleted'
+      if(ftEnt == null || iNode == null || ftEnt.mode == null 
+         || iNode.flag == iNode.DELETE)
+      {
+        filetable.ffree(ftEnt);
+        return null;
+      }
+
+      synchronized(ftEnt)
+      {
+        if(ftEnt.mode.equals("w") && !deallocAllBlocks(ftEnt))
+        {
+          filetable.ffree(ftEnt);
+          Kernel.report("Open error: Could not deallocate all blocks");
+          return null;
+        }
+      }
+      return ftEnt;
   }
 
   public boolean close (FileTableEntry ftEnt ) 
   { 
+    Inode iNode;
+    if(ftEnt == null)
+    {
+      return false;
+    }
 
+    synchronized(ftEnt)
+    {
+      iNode = ftEnt.iNode;
+      if(iNode == null)
+      {
+        return false;
+      }
+
+      if(iNode.flag == Inode.DELETE && ftEnt.count == 0)
+      {
+        deallocAllBlocks(ftEnt);
+        if(!directory.ifree(ftEnt.iNumber))
+        {
+          return false;
+        }
+
+      }
+      if(!filetable.ffree(ftEnt))
+      {
+        return false;
+      }
+    }
+    return true;
   }
 
   //returns the size in bytes of the file indicated by fd.
