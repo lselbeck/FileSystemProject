@@ -52,7 +52,7 @@ public class FileTable {
 
 			if(iNumber < 0)
 			{
-				if(mode == FileTableEntry.READONLY)
+				if(mode.compareTo(FileTableEntry.READONLY) == 0)
 				{
 					return null;
 				}
@@ -75,7 +75,7 @@ public class FileTable {
 			{
 				break;
 			}
-			if(mode == FileTableEntry.READONLY && iNode.flag == Inode.READ)
+			if(mode.compareTo(FileTableEntry.READONLY) == 0 && iNode.flag == Inode.READ)
 			{
 				break;
 			}
