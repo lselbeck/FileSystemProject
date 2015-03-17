@@ -130,6 +130,7 @@ public synchronized int write( FileTableEntry ftEnt, byte[] buffer)
 {
    int bufferLength = buffer.length; 
 
+	
 
 }
 

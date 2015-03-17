@@ -125,7 +125,7 @@ public class Inode {
    {
       length = 0;
       count = 0;
-      flag = USED;
+      flag = 1;
       for ( int i = 0; i < directSize; i++ )
          direct[i] = -1;
       indirect = -1;
