@@ -218,16 +218,26 @@ public class FileSystem
 	  	int offsetInBlock = ftEnt.seekPtr % Disk.blockSize;
 	  	
 	  	//if empty file
-	  	if (ftEnt.iNode.length == 0)
+	  	if (fsize(ftEnt) == 0)
 	  	{
-	  		ftEnt.iNode.direct[0] = superblock.getFreeBlock();
-	  		for (int i = 0; i < (bufferLength / Disk.blockSize) + 1; i++)
+	  		//copy buffer into disk blocks until direct space runs out
+	  		for (int i = 0; i < 11 && i < (bufferLength / Disk.blockSize) + 1; i++)
+	  		{
+	  			byte[] blockOfData = new byte[Disk.blockSize];
+	  			System.arraycopy
+	  					(buffer, i*Disk.blockSize, blockOfData, 0, Disk.blockSize);
+	  					
+	  			ftEnt.iNode.direct[i] = superblock.getFreeBlock();
+	  			SysLib.rawwrite(ftEnt.iNode.direct[i], blockOfData);
+	  		}
+	  		
+	  		if (bufferLength / Disk.blockSize + 1 > 11)
 	  		{
 	  			
 	  		}
 	  		
 	  	}
-	  	else
+	  	else //file already has stuff in it
 	  	{
 	  		byte[][] toInsert = new byte[totalBlocks][Disk.blockSize];
 	  		
