@@ -62,10 +62,17 @@ public class FileSystem
   //inodes to be allocated) in your file system. The return value is 0 on
   //success, otherwise -1.
   */
-  public boolean format( int files ) 
+  public int format( int files ) 
   {
+    if(!table.fempty())
+    {
+      Kernel.report("Format Error: Cannot format superblock while files are in use\n");
+      return ERROR;
+    }
     superblock.format(files);
-
+    directory = new Directory(Directory.totalInodes);
+    table = new FileTable(directory);
+    return OK;
   }
 
 
