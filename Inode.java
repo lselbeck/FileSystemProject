@@ -1,5 +1,5 @@
 //Inode.java
-//Author: Luke Selbeck
+//Author: Luke Selbeck, Greg Kitzmiller, Dallan Van Ess
 //Date: 3/18/2015
 //
 //Description:
