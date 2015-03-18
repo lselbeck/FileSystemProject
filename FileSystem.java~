@@ -221,7 +221,7 @@ public class FileSystem
 	  	if (fsize(ftEnt) == 0)
 	  	{
 	  		//copy buffer into disk blocks until direct space runs out
-	  		for (int i = 0; i < 11 && i < (bufferLength / Disk.blockSize) + 1; i++)
+	  		for (int i = 0; i < 11 && i < (bufferLength / Disk.blockSize); i++)
 	  		{
 	  			byte[] blockOfData = new byte[Disk.blockSize];
 	  			System.arraycopy
@@ -233,9 +233,26 @@ public class FileSystem
 	  		
 	  		if (bufferLength / Disk.blockSize + 1 > 11)
 	  		{
-	  			
+	  			byte[] blockNumBytes = new byte[Disk.blockSize];
+	  			ftEnt.iNode.indirect = superblock.getFreeBlock();
+	  			for (int i = 11; i < Disk.blockSize / 2 ||
+	  					i < (bufferLength/Disk.blockSize);	i++)
+		  		{
+		  			//put buffer into 512 byte chunk
+		  			byte[] blockOfData = new byte[Disk.blockSize];
+		  			System.arraycopy
+		  					(buffer, i*Disk.blockSize, blockOfData, 0, Disk.blockSize);
+		  			
+		  			//put new block in indirect list
+		  			int newBlockNum = superblock.getFreeBlock();
+		  			SysLib.int2bytes(newBlockNum, blockNumBytes, (i-11)*2);
+		  			SysLib.rawwrite(indirect, blockNumBytes);
+		  			
+		  			//write data to block
+		  			SysLib.rawwrite(newBlockNum, blockOfData);
+		  		}
 	  		}
-	  		
+	  		return bufferLength;
 	  	}
 	  	else //file already has stuff in it
 	  	{

@@ -215,13 +215,11 @@ public class FileSystem
 	  	//assumption: if there are enough free blocks,
 	  	//the buffer can be written to the file
 	  	
-	  	int offsetInBlock = ftEnt.seekPtr % Disk.blockSize;
-	  	
 	  	//if empty file
 	  	if (fsize(ftEnt) == 0)
 	  	{
 	  		//copy buffer into disk blocks until direct space runs out
-	  		for (int i = 0; i < 11 && i < (bufferLength / Disk.blockSize) + 1; i++)
+	  		for (int i = 0; i < 11 && i < (bufferLength / Disk.blockSize); i++)
 	  		{
 	  			byte[] blockOfData = new byte[Disk.blockSize];
 	  			System.arraycopy
@@ -235,33 +233,31 @@ public class FileSystem
 	  		{
 	  			byte[] blockNumBytes = new byte[Disk.blockSize];
 	  			ftEnt.iNode.indirect = superblock.getFreeBlock();
-	  			for (int i = ftEnt.iNode.indirect;
-	  				i < Disk.blockSize / 2 || i < (bufferLength/Disk.blockSize) + 1;
-	  				i++)
+	  			for (int i = 11; i < Disk.blockSize / 2 ||
+	  					i < (bufferLength/Disk.blockSize);	i++)
 		  		{
+		  			//put buffer into 512 byte chunk
 		  			byte[] blockOfData = new byte[Disk.blockSize];
 		  			System.arraycopy
 		  					(buffer, i*Disk.blockSize, blockOfData, 0, Disk.blockSize);
-		  					
+		  			
+		  			//put new block in indirect list
 		  			int newBlockNum = superblock.getFreeBlock();
-		  			SysLib.int2bytes(newBlockNum, blockNumBytes, );
+		  			SysLib.int2bytes(newBlockNum, blockNumBytes, (i-11)*2);
 		  			SysLib.rawwrite(indirect, blockNumBytes);
 		  			
-		  			SysLib.rawwrite(ftEnt.iNode.direct[i], blockOfData);
+		  			//write data to block
+		  			SysLib.rawwrite(newBlockNum, blockOfData);
 		  		}
-	  			
 	  		}
-	  		
+	  		return bufferLength;
 	  	}
 	  	else //file already has stuff in it
 	  	{
-	  		byte[][] toInsert = new byte[totalBlocks][Disk.blockSize];
+	  		int offsetInBlock = ftEnt.seekPtr % Disk.blockSize;
+	  		byte[] blockOfData = new byte[Disk.blockSize];
 	  		
-	  		for (int i = 0; i < (bufferLength / Disk.blockSize) + 1; i++)
-	  		{
-	  			System.arraycopy(buffer, 0,
-	  					toInsert[i], (offsetInBlock + (i * Disk.blockSize)));
-	  		}
+	  		
 	  	}
   	
   }
