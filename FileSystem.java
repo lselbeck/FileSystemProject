@@ -11,7 +11,7 @@ public class FileSystem
 
   private SuperBlock superblock; 
   private Directory directory; 
-  private Filetable filetable; 
+  private FileTable filetable; 
 
 
   private final int SEEK_SET = 0; 
@@ -65,6 +65,7 @@ public class FileSystem
   public boolean format( int files ) 
   {
     superblock.format(files);
+
   }
 
 
@@ -83,23 +84,72 @@ public class FileSystem
   */
   public FileTableEntry open( String filename, String mode ) 
   {
-      FileTableEntry ftEnt = filetable.falloc (filename, mode); 
-      if (mode.equals( "w" ) 
-      {
+      FileTableEntry ftEnt;
+      Inode iNode;
 
-       
-          if (deallocAllBlocks (ftEnt ) == false ) // need to implement
-          {
-             return null; 
-          }
-            
+      if(filename == "" || mode == "")
+      {
+        return null;
       }
-     return ftEnt;  
+
+      ftEnt = FileTable.falloc(filename, mode);
+      iNode = ftEnt.iNode;
+      //if ftEnt = null OR iNode = null OR ftEnt mode is invalid OR iNode is flagged 'to be deleted'
+      if(ftEnt == null || iNode == null || ftEnt.mode == null 
+         || iNode.flag == iNode.DELETE)
+      {
+        filetable.ffree(ftEnt);
+        return null;
+      }
+
+      synchronized(ftEnt)
+      {
+        if(ftEnt.mode.equals("w") && !deallocAllBlocks(ftEnt))
+        {
+          filetable.ffree(ftEnt);
+          Kernel.report("Open error: Could not deallocate all blocks");
+          return null;
+        }
+      }
+      return ftEnt;
   }
 
+/*
+  //closes the file corresponding to fd, commits all file transactions on this
+  //file, and unregisters fd from the user file descriptor table of the calling
+  //thread's TCB. The return value is 0 in success, otherwise -1.
+  */
   public boolean close (FileTableEntry ftEnt ) 
   { 
+    Inode iNode;
+    if(ftEnt == null)
+    {
+      return false;
+    }
 
+    synchronized(ftEnt)
+    {
+      iNode = ftEnt.iNode;
+      if(iNode == null)
+      {
+        return false;
+      }
+
+      if(iNode.flag == Inode.DELETE && ftEnt.count == 0)
+      {
+        deallocAllBlocks(ftEnt);
+        if(!directory.ifree(ftEnt.iNumber))
+        {
+          return false;
+        }
+
+      }
+      if(!filetable.ffree(ftEnt))
+      {
+        return false;
+      }
+    }
+    return true;
   }
 
   //returns the size in bytes of the file indicated by fd.
@@ -156,31 +206,75 @@ public class FileSystem
 
   public synchronized int write( FileTableEntry ftEnt, byte[] buffer)
   {
-     int bufferLength = buffer.length;
-  	int writeBlock = ftEnt.iNode.findTargetBlock(ftEnt.seekPtr);
-  	
-  	//error handling
-  	if (writeBlock < 0)
-  	{
-  		if (writeBlock == -1)
-  		{
-  			SysLib.cerr("Pointer beyond end of file");
-  		}
-  		else if (writeBlock == -2)
-  		{
-  			SysLib.cerr("Negative pointer");
-  		}
-  		return -1;
-  	}
-  	else if (writeBlock + bufferLength > ftEnt.iNode.maxFileSize())
-  	{
-  		SysLib.cerr("Cannot write beyond maximum file length");
-  		return -1;
-  	}
-  	
-  	//assumption: if there are enough free blocks,
-  	//the buffer can be written to the file
-  	int offsetInBlock
+   	int bufferLength = buffer.length;
+	  	int writeBlock = ftEnt.iNode.findTargetBlock(ftEnt.seekPtr);
+	  	
+	  	//error handling
+	  	if (writeBlock < 0)
+	  	{
+	  		if (writeBlock == -1)
+	  		{
+	  			SysLib.cerr("Pointer beyond end of file");
+	  		}
+	  		else if (writeBlock == -2)
+	  		{
+	  			SysLib.cerr("Negative pointer");
+	  		}
+	  		return -1;
+	  	}
+	  	else if (writeBlock + bufferLength > ftEnt.iNode.maxFileSize())
+	  	{
+	  		SysLib.cerr("Cannot write beyond maximum file length");
+	  		return -1;
+	  	}
+	  	
+	  	//assumption: if there are enough free blocks,
+	  	//the buffer can be written to the file
+	  	
+	  	//if empty file
+	  	if (fsize(ftEnt) == 0)
+	  	{
+	  		//copy buffer into disk blocks until direct space runs out
+	  		for (int i = 0; i < 11 && i < (bufferLength / Disk.blockSize); i++)
+	  		{
+	  			byte[] blockOfData = new byte[Disk.blockSize];
+	  			System.arraycopy
+	  					(buffer, i*Disk.blockSize, blockOfData, 0, Disk.blockSize);
+	  					
+	  			ftEnt.iNode.direct[i] = superblock.getFreeBlock();
+	  			SysLib.rawwrite(ftEnt.iNode.direct[i], blockOfData);
+	  		}
+	  		
+	  		if (bufferLength / Disk.blockSize + 1 > 11)
+	  		{
+	  			byte[] blockNumBytes = new byte[Disk.blockSize];
+	  			ftEnt.iNode.indirect = superblock.getFreeBlock();
+	  			for (int i = 11; i < Disk.blockSize / 2 ||
+	  					i < (bufferLength/Disk.blockSize);	i++)
+		  		{
+		  			//put buffer into 512 byte chunk
+		  			byte[] blockOfData = new byte[Disk.blockSize];
+		  			System.arraycopy
+		  					(buffer, i*Disk.blockSize, blockOfData, 0, Disk.blockSize);
+		  			
+		  			//put new block in indirect list
+		  			int newBlockNum = superblock.getFreeBlock();
+		  			SysLib.int2bytes(newBlockNum, blockNumBytes, (i-11)*2);
+		  			SysLib.rawwrite(indirect, blockNumBytes);
+		  			
+		  			//write data to block
+		  			SysLib.rawwrite(newBlockNum, blockOfData);
+		  		}
+	  		}
+	  		return bufferLength;
+	  	}
+	  	else //file already has stuff in it
+	  	{
+	  		int offsetInBlock = ftEnt.seekPtr % Disk.blockSize;
+	  		byte[] blockOfData = new byte[Disk.blockSize];
+	  		
+	  		
+	  	}
   	
   }
 
@@ -232,6 +326,11 @@ public class FileSystem
     return true;
   }
 
+ /*
+  //destroys the file specified by fileName. If the file is currently open, it is
+  //not destroyed until the last open on it is closed, but new attempts to open
+  //it will fail.
+  */
   boolean delete( String filename )
   {
   }
@@ -251,33 +350,5 @@ public class FileSystem
   */
   int seek(FileTableEntry ftEnt, int offset, int whence)
   {
-  }
-
-
-  int write( int fd, byte buffer[] )
-  {
-
-  }
-
-  /*
-  //closes the file corresponding to fd, commits all file transactions on this
-  //file, and unregisters fd from the user file descriptor table of the calling
-  //thread's TCB. The return value is 0 in success, otherwise -1.
-  */
-
-  int close( int fd )
-  {
-
-  }
-
-
-  /*
-  //destroys the file specified by fileName. If the file is currently open, it is
-  //not destroyed until the last open on it is closed, but new attempts to open
-  //it will fail.
-  */
-  int delete( String fileName )
-  {
-
   }
 }

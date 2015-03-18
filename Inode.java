@@ -86,7 +86,21 @@ public class Inode {
 
    public short getIndexBlockNumber()
    {
-      return indirect;
+      /*int newBlockNum = superblock.getFreeBlock();
+      
+      if (length/Disk.blockSize > 11) //belongs in indirect
+      {
+      byte[] blockNumBytes = new byte[Disk.blockSize];
+		SysLib.int2bytes(newBlockNum, blockNumBytes, length/Disk.blockSize);
+		SysLib.rawwrite(indirect, blockNumBytes);
+		}
+		else //belongs in direct
+		{
+			direct[length/Disk.blockSize] = newBlockNum;
+		}
+		
+		return newBlockNum;*/
+		return indirect;
    }
 
    public boolean setIndexBlock(short indexBlockNumber)
@@ -139,3 +153,4 @@ public class Inode {
       indirect = -1;
    }
 }
+
