@@ -233,6 +233,22 @@ public class FileSystem
 	  		
 	  		if (bufferLength / Disk.blockSize + 1 > 11)
 	  		{
+	  			byte[] blockNumBytes = new byte[Disk.blockSize];
+	  			ftEnt.iNode.indirect = superblock.getFreeBlock();
+	  			for (int i = ftEnt.iNode.indirect;
+	  				i < Disk.blockSize / 2 || i < (bufferLength/Disk.blockSize) + 1;
+	  				i++)
+		  		{
+		  			byte[] blockOfData = new byte[Disk.blockSize];
+		  			System.arraycopy
+		  					(buffer, i*Disk.blockSize, blockOfData, 0, Disk.blockSize);
+		  					
+		  			int newBlockNum = superblock.getFreeBlock();
+		  			SysLib.int2bytes(newBlockNum, blockNumBytes, );
+		  			SysLib.rawwrite(indirect, blockNumBytes);
+		  			
+		  			SysLib.rawwrite(ftEnt.iNode.direct[i], blockOfData);
+		  		}
 	  			
 	  		}
 	  		
