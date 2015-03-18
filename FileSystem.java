@@ -183,9 +183,9 @@ public class FileSystem
      int bytesLeft = fileSize - seekPointer; 
     
 
-     //error scaffolding 
-     //bytes remaining between current seek ptr and EOF are < bufferlength
-     //read as many bytes as possible, putting into beginning of buffer
+//error scaffolding 
+//bytes remaining between current seek ptr and EOF are < bufferlength
+//read as many bytes as possible, putting into beginning of buffer
 	if ( bytesLeft < sizeOfBuffer)   
 	{ 
              //read bytes into beginning of buffer
