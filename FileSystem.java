@@ -177,19 +177,27 @@ public class FileSystem
 
   public int synchronized read (FileTableEntry ftEnt, byte[] buffer)
   {
-     int sizeOfBuffer = buffer.length;
-     int seekPointer = ftEnt.seekPtr;  
-     int fileSize =  ftEnt.iNode.length; //size of the file
-     int bytesLeft = fileSize - seekPointer; 
-    
+	int sizeOfBuffer = buffer.length;
+	int seekPointer = ftEnt.seekPtr;  
+	int fileSize =  ftEnt.iNode.length; //size of the file
+	int bytesLeft = fileSize - seekPointer; 
+        int currentPos = 0;  
 
-//error scaffolding 
-//bytes remaining between current seek ptr and EOF are < bufferlength
-//read as many bytes as possible, putting into beginning of buffer
+	//error scaffolding 
+	//bytes remaining between current seek ptr and EOF are < bufferlength
+	//read as many bytes as possible, putting into beginning of buffer
 	if ( bytesLeft < sizeOfBuffer)   
 	{ 
              //read bytes into beginning of buffer
 	}
+        else //read until out of stuff to read
+        { 
+	while (currentPos < fileSize) //there is stuff to read
+        { 
+
+        }	
+
+        }
  
 
  

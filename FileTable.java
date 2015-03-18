@@ -1,5 +1,5 @@
 //FileTable.java
-//Author: Dallas Van Ess
+//Author: Dallas Van Ess, Greg Kitzmiller, Luke Selbeck
 //Date: 3/18/2015
 //
 //Description:

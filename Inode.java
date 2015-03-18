@@ -86,21 +86,7 @@ public class Inode {
 
    public short getIndexBlockNumber()
    {
-      /*int newBlockNum = superblock.getFreeBlock();
-      
-      if (length/Disk.blockSize > 11) //belongs in indirect
-      {
-      byte[] blockNumBytes = new byte[Disk.blockSize];
-		SysLib.int2bytes(newBlockNum, blockNumBytes, length/Disk.blockSize);
-		SysLib.rawwrite(indirect, blockNumBytes);
-		}
-		else //belongs in direct
-		{
-			direct[length/Disk.blockSize] = newBlockNum;
-		}
-		
-		return newBlockNum;*/
-		return indirect;
+      return indirect;
    }
 
    public boolean setIndexBlock(short indexBlockNumber)
@@ -128,6 +114,20 @@ public class Inode {
          SysLib.rawread(indirect, pointerBlockData);
          return SysLib.bytes2short(pointerBlockData, (block-11)*2);
       }
+   {
+      if (offset > length)
+      {
+         return -1; //trying to access past the end of the file
+      }
+
+		int block = offset/512;
+
+      if (block > 10)
+      {
+         byte[] pointerBlockData = new byte[Disk.blockSize];
+         SysLib.rawread(indirect, pointerBlockData);
+         return SysLib.bytes2short(pointerBlockData, (block-11)*2);
+      }
       else if (block > -1)
       {
          return direct[block];
@@ -139,18 +139,3 @@ public class Inode {
    }
    
    public int maxFileSize()
-   {
-   	return maxFileSize;
-   }
-
-   private void initializeDefaults() 
-   {
-      length = 0;
-      count = 0;
-      flag = USED;
-      for ( int i = 0; i < directSize; i++ )
-         direct[i] = -1;
-      indirect = -1;
-   }
-}
-
