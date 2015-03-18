@@ -13,13 +13,6 @@ public class FileSystem
   private Directory directory; 
   private FileTable filetable; 
 
-
-  private final int SEEK_SET = 0; 
-  private final int SEEK_CUR = 1; 
-  private final int SEEK_END = 2; 
-  private final int ERROR = -1; 
-  private final int OK = 0; 
-
   public FileSystem(int diskBlocks)
   {
     //create superblock and format disk with 64 iNodes in default
@@ -407,8 +400,40 @@ else
   //file size, you must set the seek pointer to the end of the file. In both
   //cases, you should return success.
   */
-  int seek(FileTableEntry ftEnt, int offset, int whence)
+  //cases
+  private final int SEEK_SET = 0; 
+  private final int SEEK_CUR = 1; 
+  private final int SEEK_END = 2; 
+  private final int ERROR = -1; 
+  private final int OK = 0; 
+
+  public synchronized int seek(FileTableEntry ftEnt, int offset, int whence)
   {
-    
+    switch (whence)
+    {
+      case SEEK_SET:
+        ftEnt.seekPtr = seekClamper(ftEnt, offset);
+        break;
+      case SEEK_CUR:
+        ftEnt.seekPtr = seekClamper(ftEnt, ftEnt.seekPtr + offset);
+        break;
+      case SEEK_END:
+        ftEnt.seekPtr = seekClamper(ftEnt, fsize(ftEnt) + offset);
+        break;
+    }
+    return ftEnt.seekPtr;
+  }
+
+  private synchronized int seekClamper(FileTableEntry ftEnt, int offset)
+  {
+    if (offset < 0) 
+    {
+      return 0;
+    }
+    else if (offset > fsize(ftEnt))
+    {
+      return fsize(ftEnt);
+    }
+    return offset;
   }
 }
