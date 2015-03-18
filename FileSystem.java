@@ -177,29 +177,36 @@ public class FileSystem
 
   public int synchronized read (FileTableEntry ftEnt, byte[] buffer)
   {
-	int sizeOfBuffer = buffer.length;
-	int seekPointer = ftEnt.seekPtr;  
+        int bufferPointer = 0; 
 	int fileSize =  ftEnt.iNode.length; //size of the file
-	int bytesLeft = fileSize - seekPointer; 
-        int currentPos = 0;  
-
-	//error scaffolding 
-	//bytes remaining between current seek ptr and EOF are < bufferlength
-	//read as many bytes as possible, putting into beginning of buffer
-	if ( bytesLeft < sizeOfBuffer)   
-	{ 
-             //read bytes into beginning of buffer
-	}
-        else //read until out of stuff to read
-        { 
-	while (currentPos < fileSize) //there is stuff to read
-        { 
-
-        }	
-
-        }
+	int bytesLeft = fileSize - ftEnt.seekPtr; 
+        int offset = 0; 
+        byte[] readBlock = new byte[512];  
  
+        
+if(ftEnt != null && buffer != null)
+{
+	   while (ftEnt.seekPtr < ftEnt.iNode.length && bufferPointer < buffer.length)
+           { 
+               readLength = Math.min(Disk.blockSize-offset, buffer.length - bufferPointer); 
+               //either read to the end of the block or read the space left in the buffer
+               currentBlock = ftEnt.inode.findTargetBlock(ftEnt.seekPtr);
+ 	       offset = fEnt.seekPtr % Disk.blockSize; //block offset           
+               SysLib.rawread(currentBlock, readBlock); 
+               System.arraycopy(readBlock, offset, buffer, bufferPointer, readLength); //
+               //copy block buffer into the parameter buffer
+               bufferPointer += readLength; 
+               ftEnt.seekPter+= readLength;   
+           }  
+             
+	
 
+        return bufferPointer; 
+}
+else 
+{
+    return -1; 
+}
  
   }
 
