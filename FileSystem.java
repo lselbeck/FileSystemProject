@@ -125,8 +125,24 @@ public class FileSystem
   */
 
 
-  public int read (FileTableEntry ftEnt, byte[] buffer)
+  public int synchronized read (FileTableEntry ftEnt, byte[] buffer)
   {
+     int sizeOfBuffer = buffer.length;
+     int seekPointer = ftEnt.seekPtr;  
+     int fileSize =  ftEnt.iNode.length; //size of the file
+     int bytesLeft = fileSize - seekPointer; 
+    
+
+     //error scaffolding 
+     //bytes remaining between current seek ptr and EOF are < bufferlength
+     //read as many bytes as possible, putting into beginning of buffer
+	if ( bytesLeft < sizeOfBuffer)   
+	{ 
+             //read bytes into beginning of buffer
+	}
+ 
+
+ 
   }
 
   /*write (int fd, byte buffer[])
