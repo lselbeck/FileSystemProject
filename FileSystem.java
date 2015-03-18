@@ -340,8 +340,21 @@ public class FileSystem
   //not destroyed until the last open on it is closed, but new attempts to open
   //it will fail.
   */
-  boolean delete( String filename )
+  public boolean delete( String filename )
   {
+    short iNumber;
+    if(filename == "")
+    {
+      return false
+    }
+
+    iNumber = directory.namei(filename);
+    //file doesn't exist
+    if(iNumber == ERROR)
+    {
+      return false;
+    }
+    return directory.ifree(iNumber);
   }
 
   /*

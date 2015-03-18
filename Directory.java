@@ -84,9 +84,10 @@ public class Directory {
 		return -1;
 	}
 
-	public boolean ifree( short iNumber ) {
-		// deallocates this inumber (inode number)
-		// the corresponding file will be deleted.
+	// deallocates this inumber (inode number)
+	// the corresponding file will be deleted.
+	public boolean ifree( short iNumber ) 
+	{
 		if(fsize[iNumber] < 0)
 		{
 			return false;
@@ -95,8 +96,10 @@ public class Directory {
 		return true;
 	}
 
-	public short namei( String filename ) {
-		// returns the inumber corresponding to this filename
+	// returns the inumber corresponding to this filename
+	public short namei( String filename ) 
+	{
+		
 		String tmp;
 		int strLen = filename.length();
 		int sizeLength = fsize.length;
