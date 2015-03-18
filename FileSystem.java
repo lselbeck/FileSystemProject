@@ -207,9 +207,8 @@ public class FileSystem
   public synchronized int write( FileTableEntry ftEnt, byte[] buffer)
   {
    	int bufferLength = buffer.length;
-	  	int writeBlock = ftEnt.iNode.findTargetBlock(ftEnt.seekPtr);
-	  	
-	  	//error handling
+   	
+   	//error handling
 	  	if (writeBlock < 0)
 	  	{
 	  		if (writeBlock == -1)
@@ -229,9 +228,9 @@ public class FileSystem
 	  	}
 	  	
 	  	//assumption: if there are enough free blocks,
-	  	//the buffer can be written to the file
-	  	
-	  	//if empty file
+	  	//the buffer can be written to the file  
+   	
+   	//if empty file
 	  	if (fsize(ftEnt) == 0)
 	  	{
 	  		//copy buffer into disk blocks until direct space runs out
@@ -268,14 +267,16 @@ public class FileSystem
 	  		}
 	  		return bufferLength;
 	  	}
-	  	else //file already has stuff in it
-	  	{
-	  		int offsetInBlock = ftEnt.seekPtr % Disk.blockSize;
-	  		byte[] blockOfData = new byte[Disk.blockSize];
-	  		
-	  		
-	  	}
-  	
+	  	
+	  	//file already has stuff in it   	
+	  	int writeBlock = ftEnt.iNode.findTargetBlock(ftEnt.seekPtr);
+	  	int offsetInBlock = ftEnt.seekPtr % Disk.blockSize;
+	  	byte[] blockOfData = new byte[Disk.blockSize];
+
+		for (int i = 0; i < (bufferLength / Disk.blockSize); i++)
+	  	{				
+			
+		}
   }
 
   private boolean deallocAllBlocks( FileTableEntry ftEnt ) 
