@@ -215,8 +215,6 @@ public class FileSystem
 	  	//assumption: if there are enough free blocks,
 	  	//the buffer can be written to the file
 	  	
-	  	int offsetInBlock = ftEnt.seekPtr % Disk.blockSize;
-	  	
 	  	//if empty file
 	  	if (fsize(ftEnt) == 0)
 	  	{
@@ -256,13 +254,10 @@ public class FileSystem
 	  	}
 	  	else //file already has stuff in it
 	  	{
-	  		byte[][] toInsert = new byte[totalBlocks][Disk.blockSize];
+	  		int offsetInBlock = ftEnt.seekPtr % Disk.blockSize;
+	  		byte[] blockOfData = new byte[Disk.blockSize];
 	  		
-	  		for (int i = 0; i < (bufferLength / Disk.blockSize) + 1; i++)
-	  		{
-	  			System.arraycopy(buffer, 0,
-	  					toInsert[i], (offsetInBlock + (i * Disk.blockSize)));
-	  		}
+	  		
 	  	}
   	
   }
