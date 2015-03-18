@@ -222,76 +222,99 @@ else
   public synchronized int write( FileTableEntry ftEnt, byte[] buffer)
   {
    	int bufferLength = buffer.length;
-   	
+   	int writeBlock = ftEnt.iNode.findTargetBlock(ftEnt.seekPtr);
    	//error handling
-	  	if (writeBlock < 0)
-	  	{
-	  		if (writeBlock == -1)
-	  		{
-	  			SysLib.cerr("Pointer beyond end of file");
-	  		}
-	  		else if (writeBlock == -2)
-	  		{
-	  			SysLib.cerr("Negative pointer");
-	  		}
-	  		return -1;
-	  	}
-	  	else if (writeBlock + bufferLength > ftEnt.iNode.maxFileSize())
-	  	{
-	  		SysLib.cerr("Cannot write beyond maximum file length");
-	  		return -1;
-	  	}
+  	if (writeBlock < 0)
+  	{
+  		if (writeBlock == -1)
+  		{
+  			SysLib.cerr("Pointer beyond end of file");
+  		}
+  		else if (writeBlock == -2)
+  		{
+  			SysLib.cerr("Negative pointer");
+  		}
+  		return -1;
+  	}
+  	else if (writeBlock + bufferLength > ftEnt.iNode.maxFileSize())
+  	{
+  		SysLib.cerr("Cannot write beyond maximum file length");
+  		return -1;
+  	}
+    else if (ftEnt.mode == "r")
+    {
+      SysLib.cerr("Cannot write to read only file");
+      return -1;
+    }
 	  	
-	  	//assumption: if there are enough free blocks,
-	  	//the buffer can be written to the file  
-   	
+  	//assumption: if there are enough free blocks,
+  	//the buffer can be written to the file  
+
    	//if empty file
-	  	if (fsize(ftEnt) == 0)
-	  	{
-	  		//copy buffer into disk blocks until direct space runs out
-	  		for (int i = 0; i < 11 && i < (bufferLength / Disk.blockSize); i++)
+  	if (fsize(ftEnt) == 0)
+  	{
+  		//copy buffer into disk blocks until direct space runs out
+  		for (int i = 0; i < 11 && i < (bufferLength / Disk.blockSize); i++)
+  		{
+  			byte[] blockOfData = new byte[Disk.blockSize];
+  			System.arraycopy
+  					(buffer, i*Disk.blockSize, blockOfData, 0, Disk.blockSize);
+  					
+  			ftEnt.iNode.direct[i] = superblock.getFreeBlock();
+  			SysLib.rawwrite(ftEnt.iNode.direct[i], blockOfData);
+  		}
+  		
+  		if (bufferLength / Disk.blockSize + 1 > 11)
+  		{
+  			byte[] blockNumBytes = new byte[Disk.blockSize];
+  			ftEnt.iNode.indirect = superblock.getFreeBlock();
+  			for (int i = 11; i < Disk.blockSize / 2 ||
+  					i < (bufferLength/Disk.blockSize);	i++)
 	  		{
+	  			//put buffer into 512 byte chunk
 	  			byte[] blockOfData = new byte[Disk.blockSize];
 	  			System.arraycopy
 	  					(buffer, i*Disk.blockSize, blockOfData, 0, Disk.blockSize);
-	  					
-	  			ftEnt.iNode.direct[i] = superblock.getFreeBlock();
-	  			SysLib.rawwrite(ftEnt.iNode.direct[i], blockOfData);
+	  			
+	  			//put new block in indirect list
+	  			int newBlockNum = superblock.getFreeBlock();
+	  			SysLib.int2bytes(newBlockNum, blockNumBytes, (i-11)*2);
+	  			SysLib.rawwrite(indirect, blockNumBytes);
+	  			
+	  			//write data to block
+	  			SysLib.rawwrite(newBlockNum, blockOfData);
 	  		}
-	  		
-	  		if (bufferLength / Disk.blockSize + 1 > 11)
-	  		{
-	  			byte[] blockNumBytes = new byte[Disk.blockSize];
-	  			ftEnt.iNode.indirect = superblock.getFreeBlock();
-	  			for (int i = 11; i < Disk.blockSize / 2 ||
-	  					i < (bufferLength/Disk.blockSize);	i++)
-		  		{
-		  			//put buffer into 512 byte chunk
-		  			byte[] blockOfData = new byte[Disk.blockSize];
-		  			System.arraycopy
-		  					(buffer, i*Disk.blockSize, blockOfData, 0, Disk.blockSize);
-		  			
-		  			//put new block in indirect list
-		  			int newBlockNum = superblock.getFreeBlock();
-		  			SysLib.int2bytes(newBlockNum, blockNumBytes, (i-11)*2);
-		  			SysLib.rawwrite(indirect, blockNumBytes);
-		  			
-		  			//write data to block
-		  			SysLib.rawwrite(newBlockNum, blockOfData);
-		  		}
-	  		}
-	  		return bufferLength;
-	  	}
+  		}
+  		return bufferLength;
+  	}
 	  	
-	  	//file already has stuff in it   	
-	  	int writeBlock = ftEnt.iNode.findTargetBlock(ftEnt.seekPtr);
-	  	int offsetInBlock = ftEnt.seekPtr % Disk.blockSize;
-	  	byte[] blockOfData = new byte[Disk.blockSize];
+  	//file already has stuff in it   	
+  	int offsetInBlock = ftEnt.seekPtr % Disk.blockSize;
+    int offsetInverse = Disk.blockSize - offsetInBlock;
+  	byte[] blockOfData = new byte[Disk.blockSize];
 
 		for (int i = 0; i < (bufferLength / Disk.blockSize); i++)
-	  	{				
-			
+	  {				
+			//put buffer into block chunk, taking into consideration the offset that
+      //previous data puts on the block
+      int remainingBytes = bufferLength - i*Disk.blockSize;
+      if (offsetInBlock < remainingBytes)
+      {
+        System.arraycopy(buffer, i*Disk.blockSize,
+          blockOfData, offsetInBlock, offsetInverse);
+      }
+      else
+      {
+        System.arraycopy(buffer, i*Disk.blockSize,
+          blockOfData, offsetInBlock, remainingBytes);
+      }
+
+      //write said chunk to the block
+      SysLib.rawwrite(writeBlock, blockOfData);
 		}
+    //update inode
+    ftEnt.iNode.toDisk(ftEnt.iNumber);
+    return bufferLength;
   }
 
   private boolean deallocAllBlocks( FileTableEntry ftEnt ) 
@@ -342,10 +365,10 @@ else
     return true;
   }
 
- /*
-  //destroys the file specified by fileName. If the file is currently open, it is
-  //not destroyed until the last open on it is closed, but new attempts to open
-  //it will fail.
+  /*
+  //destroys the file specified by fileName. If the file is currently open, it
+  //is not destroyed until the last open on it is closed, but new attempts to
+  //open it will fail.
   */
   public boolean delete( String filename )
   {
@@ -366,8 +389,8 @@ else
 
   /*
   //Updates the seek pointer corresponding to fd as follows:
-  //  If whence is SEEK_SET (= 0), the file's seek pointer is set to offset bytes
-  //     from the beginning of the file
+  //  If whence is SEEK_SET (= 0), the file's seek pointer is set to offset
+  //     bytes from the beginning of the file
   //  If whence is SEEK_CUR (= 1), the file's seek pointer is set to its current
   //     value plus the offset. The offset can be positive or negative.
   //  If whence is SEEK_END (= 2), the file's seek pointer is set to the size of
@@ -379,5 +402,6 @@ else
   */
   int seek(FileTableEntry ftEnt, int offset, int whence)
   {
+    
   }
 }

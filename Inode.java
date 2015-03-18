@@ -114,20 +114,6 @@ public class Inode {
          SysLib.rawread(indirect, pointerBlockData);
          return SysLib.bytes2short(pointerBlockData, (block-11)*2);
       }
-   {
-      if (offset > length)
-      {
-         return -1; //trying to access past the end of the file
-      }
-
-		int block = offset/512;
-
-      if (block > 10)
-      {
-         byte[] pointerBlockData = new byte[Disk.blockSize];
-         SysLib.rawread(indirect, pointerBlockData);
-         return SysLib.bytes2short(pointerBlockData, (block-11)*2);
-      }
       else if (block > -1)
       {
          return direct[block];
@@ -137,5 +123,30 @@ public class Inode {
          return -2; //negative pointer location
       }
    }
+
+   public int setTargetBlock(int filePointer, short newBlock)
+   {
+      if (filePointer / Disk.blockSize < 11) //in direct
+      {
+         direct[filePointer / Disk.blockSize] = newBlock;
+         return 0;
+      }
+      
+      if (indirect == -1) //not initialized
+      {
+         return -1; //needs to be initialized at a higher level
+      }
+
+      //block to be put in indirect
+      int indirectOffset = ((filePointer / Disk.blockSize) - 11) * 2;
+      byte[] blockData = new byte[Disk.blockSize];
+      SysLib.rawread(indirect, blockData);
+      SysLib.short2bytes(newBlock, blockData, indirectOffset);
+      SysLib.rawwrite(indirect, blockData);
+      return 0;
+   }
    
    public int maxFileSize()
+   {
+      return maxFileSize;
+   }
