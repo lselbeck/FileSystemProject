@@ -1,5 +1,5 @@
 //FileSystem.java
-//Author:GKITZ & Luke Selbeck
+//Author:Greg Kitzmiller, Luke Selbeck, Dallas Van Ess
 //Date: 3/18/2015
 //
 //Description:
