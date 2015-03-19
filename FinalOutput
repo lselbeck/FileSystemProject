@@ -1,0 +1,40 @@
+Script started on Wed 18 Mar 2015 07:33:01 PM PDT
+lps1994@uw1-320-11:~/CSS430/FileSystemProject$ java Boot
+threadOS ver 1.0:
+threadOS: DISK created
+Type ? for help
+threadOS: a new thread (thread=Thread[Thread-3,2,main] tid=0 pid=-1)
+-->l Test5
+l Test5
+threadOS: a new thread (thread=Thread[Thread-5,2,main] tid=1 pid=0)
+1: format( 48 )...................freeList = 999 (wrong)
+2: fd = open( "css430", "w+" )....successfully completed
+Correct behavior of open........................2
+3: size = write( fd, buf[16] )....Pointer beyond end of filesize = -1 (wrong)
+4: close( fd )....................successfully completed
+Correct behavior of close.......................2
+5: reopen and read from "css430"..size = 0 (wrong)
+6: append buf[32] to "css430".....Pointer beyond end of filesize = 0 (wrong)
+7: seek and read from "css430"....seek(fd,10,0)=0 (wrong)
+8: open "css430" with w+..........Pointer beyond end of filetmpBuf[1]=0 (wrong)
+9: fd = open( "bothell", "w" )....successfully completed
+10: size = write( fd, buf[6656] ).Pointer beyond end of filesize = -1 (wrong)
+11: close( fd )....................successfully completed
+12: reopen and read from "bothell"size = 0 (wrong)
+13: append buf[32] to "bothell"...Pointer beyond end of filesize = 0 (wrong)
+14: seek and read from "bothell"...seek(fd,512 * 11,0)=0 (wrong)
+15: open "bothell" with w+.........Pointer beyond end of filetmpBuf[1]=0 (wrong)
+16: delete("css430")..............Exception in thread "Thread-5" java.lang.NullPointerException
+	at FileSystem.open(FileSystem.java:96)
+	at Kernel.interrupt(Kernel.java:204)
+	at SysLib.open(SysLib.java:129)
+	at Test5.test16(Test5.java:487)
+	at Test5.run(Test5.java:51)
+	at java.lang.Thread.run(Thread.java:745)
+Exception in thread "Thread-0" java.lang.IllegalThreadStateException
+	at java.lang.Thread.start(Thread.java:705)
+	at Scheduler.run(Scheduler.java:168)
+^Clps1994@uw1-320-11:~/CSS430/FileSystemProject$ exit
+exit
+
+Script done on Wed 18 Mar 2015 07:35:02 PM PDT
