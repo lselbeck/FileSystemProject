@@ -19,7 +19,7 @@ public class FileSystem
     superblock = new SuperBlock(diskBlocks); 
 
     //create directory and register '/' in directory entry 0
-    directory = new Directory (superblock.inodeBlocks ); 
+    directory = new Directory (superblock.totalInodes ); 
 
     //file table is created and store directory in the file table 
     filetable = new FileTable (directory); 
@@ -63,7 +63,7 @@ public class FileSystem
       return false;
     }
     superblock.format(files);
-    directory = new Directory(Superblock.totalInodes);
+    directory = new Directory(SuperBlock.totalInodes);
     filetable = new FileTable(directory);
     return true;
   }
