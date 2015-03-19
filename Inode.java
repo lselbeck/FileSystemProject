@@ -5,7 +5,8 @@
 //Description:
 //Contains attributes to one file
 
-public class Inode {
+public class Inode 
+{
    private final static int iNodeSize = 32;       // fix to 32 bytes
    private final static int directSize = 11;      // # direct pointers
 	private final static int maxFileSize =
@@ -150,3 +151,29 @@ public class Inode {
    {
       return maxFileSize;
    }
+
+   private void initializeDefaults()
+   {
+      length = 0;
+      count = 0;
+      flag = USED;
+      for ( int i = 0; i < directSize; i++ )
+         direct[i] = -1;
+      indirect = -1;
+   }
+
+   public byte[] deleteIndexBlock()
+   {
+      byte[] data;
+      //nothing to delete
+      if(indirect == -1)
+      {
+         return null;
+      }
+
+      data = new byte[Disk.blockSize];
+      SysLib.rawread(indirect, data);
+      indirect = -1;
+      return data;
+   }
+}

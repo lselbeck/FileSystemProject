@@ -22,10 +22,10 @@ public class FileSystem
     directory = new Directory (superblock.inodeBlocks ); 
 
     //file table is created and store directory in the file table 
-    filetable = new Filetable (directory); 
+    filetable = new FileTable (directory); 
 
     //directory reconstruction
-    FileTableEntry dirEnt = ("/", "r");
+    FileTableEntry dirEnt = open("/", "r");
     int dirSize = fsize(dirEnt); 
     if (dirSize > 0)
     { 
@@ -45,7 +45,7 @@ public class FileSystem
 
      //write file table entry 
      write(dirEnt, dirByte); 
-     close(dirByte);  
+     close(dirEnt);  
      superblock.sync();//superblock writes the data to disk 
   }
 
@@ -55,17 +55,17 @@ public class FileSystem
   //inodes to be allocated) in your file system. The return value is 0 on
   //success, otherwise -1.
   */
-  public int format( int files ) 
+  public boolean format( int files ) 
   {
-    if(!table.fempty())
+    if(!filetable.fempty())
     {
       Kernel.report("Format Error: Cannot format superblock while files are in use\n");
-      return ERROR;
+      return false;
     }
     superblock.format(files);
-    directory = new Directory(Directory.totalInodes);
-    table = new FileTable(directory);
-    return OK;
+    directory = new Directory(Superblock.totalInodes);
+    filetable = new FileTable(directory);
+    return true;
   }
 
 
@@ -92,7 +92,7 @@ public class FileSystem
         return null;
       }
 
-      ftEnt = FileTable.falloc(filename, mode);
+      ftEnt = filetable.falloc(filename, mode);
       iNode = ftEnt.iNode;
       //if ftEnt = null OR iNode = null OR ftEnt mode is invalid OR iNode is flagged 'to be deleted'
       if(ftEnt == null || iNode == null || ftEnt.mode == null 
@@ -175,34 +175,31 @@ public class FileSystem
   */
 
 
-  public int synchronized read (FileTableEntry ftEnt, byte[] buffer)
+  public synchronized int read (FileTableEntry ftEnt, byte[] buffer)
   {
         int bufferPointer = 0; 
-	int fileSize =  ftEnt.iNode.length; //size of the file
-	int bytesLeft = fileSize - ftEnt.seekPtr; 
+	      int fileSize =  ftEnt.iNode.length; //size of the file
+	      int bytesLeft = fileSize - ftEnt.seekPtr; 
         int offset = 0; 
         byte[] readBlock = new byte[512];  
  
         
-if(ftEnt != null && buffer != null)
-{
-	   while (ftEnt.seekPtr < ftEnt.iNode.length && bufferPointer < buffer.length)
+        if(ftEnt != null && buffer != null)
+        {
+	         while (ftEnt.seekPtr < ftEnt.iNode.length && bufferPointer < buffer.length)
            { 
-               readLength = Math.min(Disk.blockSize-offset, buffer.length - bufferPointer); 
+               int readLength = Math.min(Disk.blockSize-offset, buffer.length - bufferPointer); 
                //either read to the end of the block or read the space left in the buffer
-               currentBlock = ftEnt.inode.findTargetBlock(ftEnt.seekPtr);
- 	       offset = fEnt.seekPtr % Disk.blockSize; //block offset           
+               short currentBlock = ftEnt.iNode.findTargetBlock(ftEnt.seekPtr);
+ 	             offset = ftEnt.seekPtr % Disk.blockSize; //block offset           
                SysLib.rawread(currentBlock, readBlock); 
                System.arraycopy(readBlock, offset, buffer, bufferPointer, readLength); //
                //copy block buffer into the parameter buffer
                bufferPointer += readLength; 
-               ftEnt.seekPter+= readLength;   
+               ftEnt.seekPtr+= readLength;   
            }  
-             
-	
-
-        return bufferPointer; 
-}
+        	 return bufferPointer; 
+        }
 else 
 {
     return -1; 
@@ -260,14 +257,14 @@ else
   			System.arraycopy
   					(buffer, i*Disk.blockSize, blockOfData, 0, Disk.blockSize);
   					
-  			ftEnt.iNode.direct[i] = superblock.getFreeBlock();
+  			ftEnt.iNode.direct[i] = (short)superblock.getFreeBlock();
   			SysLib.rawwrite(ftEnt.iNode.direct[i], blockOfData);
   		}
   		
   		if (bufferLength / Disk.blockSize + 1 > 11)
   		{
   			byte[] blockNumBytes = new byte[Disk.blockSize];
-  			ftEnt.iNode.indirect = superblock.getFreeBlock();
+  			ftEnt.iNode.indirect = (short)superblock.getFreeBlock();
   			for (int i = 11; i < Disk.blockSize / 2 ||
   					i < (bufferLength/Disk.blockSize);	i++)
 	  		{
@@ -279,7 +276,7 @@ else
 	  			//put new block in indirect list
 	  			int newBlockNum = superblock.getFreeBlock();
 	  			SysLib.int2bytes(newBlockNum, blockNumBytes, (i-11)*2);
-	  			SysLib.rawwrite(indirect, blockNumBytes);
+	  			SysLib.rawwrite(ftEnt.iNode.indirect, blockNumBytes);
 	  			
 	  			//write data to block
 	  			SysLib.rawwrite(newBlockNum, blockOfData);
@@ -344,7 +341,7 @@ else
         continue;
       }
       superblock.returnBlock(blockNumber);
-      iNode.setTargetBlock(block, (short) -1);
+      iNode.setTargetBlock(blockNumber, (short) -1);
     }
 
     //deallocate indirect blocks
@@ -361,7 +358,7 @@ else
         superblock.returnBlock(blockNumber);
       }
     }
-    iNode.toDisk(ftEntry.iNumber);
+    iNode.toDisk(ftEnt.iNumber);
     return true;
   }
 
@@ -375,7 +372,7 @@ else
     short iNumber;
     if(filename == "")
     {
-      return false
+      return false;
     }
 
     iNumber = directory.namei(filename);
