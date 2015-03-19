@@ -64,8 +64,8 @@ public class Inode
    public void toDisk( short iNumber ) {    // save to disk as the i-th inode
       int blockNumber = 1 + iNumber / (Disk.blockSize / iNodeSize);
       int offset = (iNumber % (Disk.blockSize / iNodeSize)) * iNodeSize;
-      byte buffer[] = new byte[Disk.blockSize];
-      byte nodeData[] = new byte[iNodeSize];
+      byte nodeData[] = new byte[Disk.blockSize];
+      SysLib.rawread(blockNumber, nodeData);
 
       //write the inode data into buffer
       SysLib.int2bytes(length, nodeData, offset);
@@ -82,7 +82,7 @@ public class Inode
       SysLib.short2bytes(indirect, nodeData, offset);
       
       //write to disk
-      SysLib.rawwrite(blockNumber, buffer);
+      SysLib.rawwrite(blockNumber, nodeData);
    }
 
    public short getIndexBlockNumber()
