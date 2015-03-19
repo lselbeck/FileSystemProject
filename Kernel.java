@@ -64,6 +64,11 @@ public class Kernel
    private static BufferedReader input
       = new BufferedReader( new InputStreamReader( System.in ) );
 
+   public static void report(String s)
+   {
+      SysLib.cout(s + "\n");
+   }   
+
    // The heart of Kernel
    public static int interrupt( int irq, int cmd, int param, Object args ) {
       TCB myTcb;
